@@ -1,0 +1,104 @@
+For this challenge, we are going to define a simple REST API that deals with the specs of the hangman game
+
+schemes:
+  - http
+
+produces:
+  - application/json
+
+
+paths:
+  /:
+    get:
+      description: Retrieve information about this server
+      responses:
+        200:
+          description: Text with info from the server
+  
+  /games:
+    get:
+      description: List all games 
+      responses:
+        200:
+          description: Succesfull response
+          schema: $ref: '#/definitions/GamesList'
+        404:
+          description: Not found, no pending games
+
+  /newgame:
+    get:
+      description: Creates a new game with a new word to be guessed
+      responses:
+        200:
+          description: 
+          schema: $ref '#/definitions/GameStatus'
+
+  /game/{id}
+    get:
+      description: returns the state of the game
+      responses:
+        200: 
+          description: Game status
+          schema: $ref '#/definitions/GameStatus'
+        404: 
+          description: Game Not found 
+
+  /game/{id}/guess/{letter}
+    get:
+      description: returns the state of the game
+      responses:
+        200: 
+          description: Correct Guess
+          schema: $ref '#/definitions/GameStatus'
+        404: 
+          description: Letter not found, Incorrect Guess
+          schema: $ref '#/definitions/GameStatus'
+        500: 
+          description: Database corrupted
+
+
+  definitions:
+    GamesList:
+      required:
+        - game_id
+        - start_time
+        - last_time
+        - done
+      properties:
+        game_id:
+          type: string
+          description: id of the game
+        start_time:
+          type: integer
+          description: creation time for the game, epoch
+        last_time:
+          type: string
+          description: last request to this game, epoch
+        done:
+          type: boolean
+          description: true / false if the game has finised
+    GameStatus:
+      required:
+        - game_id
+        - start_time
+        - guessed_so_far
+        - not_guessed
+        - tries
+        - done
+      properties:
+        game_id:
+          type: string
+          description: id of the game
+        start_time:
+          type: integer
+          description: creation time for the game, epoch
+        done:
+          type: boolean
+          description: true / false if the game has finised
+        guessed_so_far:
+          type: string
+          description: word to guess with the predicted letters in place
+        not_guessed:
+          type string
+          description: string with letters not guessed
+
