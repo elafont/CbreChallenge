@@ -25,7 +25,7 @@ type Hstatus struct {
 	Done         bool   `json:"done"`
 }
 
-// Database keeping track of games asked
+// Database keeping track of games asked, this must be moved to the server!!
 var Games []Hangman = make([]Hangman, 0, 10)
 
 // NewHangman returns a play with a new word to guess
@@ -104,3 +104,7 @@ func (hm *Hangman) Status() Hstatus {
 // func (hm *Hangman) Show() string {
 // 	return hm.word
 // }
+
+/* ToDo:
+- Move Games DB to the server
+*/
