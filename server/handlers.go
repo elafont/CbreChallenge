@@ -88,7 +88,7 @@ func GetGame(s *Server) http.HandlerFunc {
 		NewResponse(
 			http.StatusOK,
 			fmt.Sprintf("Game ID: %d", id),
-			&Data{Type: "Game", Content: game.Status()}).WriteTo(w)
+			&Data{Type: "Game Status", Content: game.Status()}).WriteTo(w)
 		return
 
 	}
@@ -126,12 +126,12 @@ func Guess(s *Server) http.HandlerFunc {
 		}
 
 		letter = strings.ToLower(letter)
-		hm := game.Guess(letter[0])
+		hs := game.Guess(letter[0])
 
 		NewResponse(
 			http.StatusOK,
 			fmt.Sprintf("Guessing letter: %s", letter[:1]),
-			&Data{Type: "Game Guess", Content: hm}).WriteTo(w)
+			&Data{Type: "Game Guess", Content: hs}).WriteTo(w)
 	}
 }
 
