@@ -29,6 +29,7 @@ func NewGame(s *Server) http.HandlerFunc {
 		game, err := hangman.New(id, "")
 		if err != nil {
 			NewResponse(http.StatusServiceUnavailable, err.Error(), nil).WriteTo(w)
+			s.Logger.Println("Error retrieving a new word: ", err)
 			return
 		}
 
