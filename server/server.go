@@ -52,6 +52,7 @@ func (s *Server) RegisterRoutes() {
 
 // Respond write handler for responses
 func (s *Server) Respond(w http.ResponseWriter, r *Response) {
+
 	if err := r.WriteTo(w); err != nil {
 		format := fmt.Sprint("error while writing response", err)
 

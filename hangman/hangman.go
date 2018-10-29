@@ -7,7 +7,7 @@ import (
 )
 
 type Hangman struct {
-	Id         int
+	id         int
 	word       string
 	start, end time.Time
 	done       bool
@@ -25,11 +25,8 @@ type Hstatus struct {
 	Done         bool   `json:"done"`
 }
 
-// Database keeping track of games asked, this must be moved to the server!!
-var Games []Hangman = make([]Hangman, 0, 10)
-
 // NewHangman returns a play with a new word to guess
-func New(dict string) (*Hangman, error) {
+func New(id int, dict string) (*Hangman, error) {
 	wd, err := words.NewDict(dict)
 	if err != nil {
 		return nil, err
@@ -37,16 +34,19 @@ func New(dict string) (*Hangman, error) {
 
 	t := time.Now()
 	hm := Hangman{
-		Id:      len(Games),
+		id:      id,
 		word:    wd.RandomWord(),
 		start:   t,
 		end:     t,
 		letters: make([]byte, 255),
 	}
 
-	Games = append(Games, hm)
-
 	return &hm, nil
+}
+
+// ID getter for id
+func (hm *Hangman) ID() int {
+	return hm.id
 }
 
 // Guess evaluates if a letter is part of the hidden word
@@ -68,8 +68,8 @@ func (hm *Hangman) Guess(letter byte) Hstatus {
 
 // Status, returns the HStatus type with info on the game
 func (hm *Hangman) Status() Hstatus {
-	var wdisplay = make([]byte, 0, len(hm.word))
-	var failed = make([]byte, 0, hm.tries)
+	var wdisplay = make([]byte, 0)
+	var failed = make([]byte, 0)
 
 	for _, l := range hm.word {
 		if hm.letters[l] == 1 {
@@ -90,7 +90,7 @@ func (hm *Hangman) Status() Hstatus {
 	}
 
 	st := Hstatus{
-		Id:           hm.Id,
+		Id:           hm.id,
 		GuessedSoFar: string(wdisplay),
 		Start:        hm.start.String()[:19],
 		Tries:        hm.tries,
@@ -106,5 +106,4 @@ func (hm *Hangman) Status() Hstatus {
 // }
 
 /* ToDo:
-- Move Games DB to the server
-*/
+ */

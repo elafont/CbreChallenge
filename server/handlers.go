@@ -25,16 +25,18 @@ func Root(s *Server) http.HandlerFunc {
 
 func NewGame(s *Server) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		game, err := hangman.New("")
+		id := len(s.Games)
+		game, err := hangman.New(id, "")
 		if err != nil {
 			NewResponse(http.StatusServiceUnavailable, err.Error(), nil).WriteTo(w)
+			return
 		}
 
 		s.Games = append(s.Games, game)
 		NewResponse(
 			http.StatusOK,
-			fmt.Sprintf("New Game: %d", game.Id),
-			&Data{Type: "Games", Content: game.Status()}).WriteTo(w)
+			fmt.Sprintf("New Game: %d", id),
+			&Data{Type: "Game Status", Content: game.Status()}).WriteTo(w)
 		return
 	}
 }
@@ -73,12 +75,12 @@ func GetGame(s *Server) http.HandlerFunc {
 		}
 
 		game := s.Games[id]
-		if game.Id != int(id) {
+		if game.ID() != int(id) {
 			// game id is not in the right place
 			// http.StatusInternalServerError
 			NewResponse(
 				http.StatusInternalServerError,
-				fmt.Sprintf("Internal DB Corrupted for ID:%d - %d", id, game.Id),
+				fmt.Sprintf("Internal DB Corrupted for ID:%d - %d", id, game.ID()),
 				nil).WriteTo(w)
 			return
 		}
@@ -110,7 +112,7 @@ func Guess(s *Server) http.HandlerFunc {
 		}
 
 		game := s.Games[id]
-		if game.Id != int(id) {
+		if game.ID() != int(id) {
 			// game id is not in the right place
 			// http.StatusInternalServerError
 			NewResponse(http.StatusInternalServerError, "Internal DB Corrupted", nil).WriteTo(w)
@@ -135,7 +137,10 @@ func Guess(s *Server) http.HandlerFunc {
 
 func WrongGuess(s *Server) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		s.Respond(w, paramError("letter must be only 1 char long"))
+		s.Respond(w, NewResponse(
+			http.StatusNotAcceptable,
+			fmt.Sprint("invalid or missing parameter: letter must be only 1 char long"),
+			nil))
 		return
 	}
 }

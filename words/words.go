@@ -4,6 +4,7 @@ import (
 	"io/ioutil"
 	"math/rand"
 	"os"
+	"path/filepath"
 	"strings"
 	"time"
 )
@@ -25,9 +26,26 @@ func init() {
 func (wd *wordDict) readDictionary(dict string) error {
 	if wd.words == nil {
 		fh, err := os.Open(dict)
-		if err != nil {
+		if os.IsNotExist(err) {
+			file := filepath.Base(dict)
+			dir, err := os.Getwd()
+			for {
+				testDict := filepath.Join(dir, file)
+				fh, err = os.Open(testDict)
+				if err != nil {
+					if dir != "/" {
+						dir = filepath.Dir(dir)
+						continue
+					} else {
+						return err
+					}
+				}
+				break
+			}
+		} else if err != nil {
 			return err
 		}
+
 		defer fh.Close()
 
 		data, err := ioutil.ReadAll(fh)
