@@ -1,16 +1,13 @@
 package cmd
 
 import (
-	"bytes"
 	"encoding/json"
 	"fmt"
 	"io"
 	"io/ioutil"
-	"net/http"
 	"os"
 
 	"github.com/elafont/CbreChallenge/hangman"
-	"github.com/elafont/CbreChallenge/server"
 	"github.com/spf13/cobra"
 )
 
@@ -76,48 +73,4 @@ func bindJSON(r io.Reader, target interface{}) error {
 		return err
 	}
 	return json.Unmarshal(body, target)
-}
-
-func request2Hs(url string) (*hangman.Hstatus, error) {
-	resp, err := http.Get(url)
-	if err != nil {
-		return nil, err
-	}
-
-	body, err := ioutil.ReadAll(resp.Body)
-	resp.Body.Close()
-
-	var answer responseHs
-
-	if err := bindJSON(bytes.NewReader(body), &answer); err != nil {
-		return nil, fmt.Errorf("error reading response %v", err)
-	}
-
-	if answer.Status == server.StatusFail {
-		return nil, fmt.Errorf("Error: Can not generate a new game, code:%d, %s", answer.Code, answer.Message)
-	}
-
-	return answer.Data.Content, nil
-}
-
-func request2HsArr(url string) (*[]hangman.Hstatus, error) {
-	resp, err := http.Get(url)
-	if err != nil {
-		return nil, err
-	}
-
-	body, err := ioutil.ReadAll(resp.Body)
-	resp.Body.Close()
-
-	var answer responseHsArr
-
-	if err := bindJSON(bytes.NewReader(body), &answer); err != nil {
-		return nil, fmt.Errorf("error reading response %v", err)
-	}
-
-	if answer.Status == server.StatusFail {
-		return nil, fmt.Errorf("Error: Can not generate a new game, code:%d, %s", answer.Code, answer.Message)
-	}
-
-	return answer.Data.Content, nil
 }
