@@ -1,41 +1,61 @@
-// Copyright © 2018 NAME HERE <EMAIL ADDRESS>
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//     http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
-
 package cmd
 
 import (
+	"bytes"
+	"encoding/json"
 	"fmt"
+	"io"
+	"io/ioutil"
+	"net/http"
 	"os"
 
+	"github.com/elafont/CbreChallenge/hangman"
+	"github.com/elafont/CbreChallenge/server"
 	"github.com/spf13/cobra"
 )
 
-var cfgFile string
+// var cfgFile string
+const DEFAULTHOST = "localhost"
+const DEFAULTWEBPORT = "8080"
+
+// Commodity structs to make simple to unmarshal json responses
+type responseHs struct { // Adapted from server.Response
+	Status  string `json:"status"`
+	Code    int    `json:"code"`
+	Message string `json:"message"`
+	Data    *struct {
+		Type    string
+		Content *hangman.Hstatus
+	} `json:"data"`
+}
+
+type responseHsArr struct { // Adapted from server.Response
+	Status  string `json:"status"`
+	Code    int    `json:"code"`
+	Message string `json:"message"`
+	Data    *struct {
+		Type    string
+		Content *[]hangman.Hstatus
+	} `json:"data"`
+}
 
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
 	Use:   "client",
 	Short: "A client for the hangman server.",
-	Long: `This client connects with the hangman server and lets you play the hangman game. 
-The tipical scenario is using the "New" command to instruct the server to 
-pick a random word and start a new game.
-"List" and "Show" commands will let you see the status of any or all games on the server.append
-The "Guess" command let you guess one letter of the hidden word.`,
+	Long: `
+This client connects with the hangman server and lets you play the hangman game. 
+* The tipical scenario is using the "New" command to instruct the server to pick 
+	a random word and start a new game.
+* "List" and "Show" commands will let you see the status of any or all games started
+	on the server.
+* The "Guess" command let you guess one letter of the hidden word.`,
 	// Uncomment the following line if your bare application
 	// has an action associated with it:
 	//	Run: func(cmd *cobra.Command, args []string) { },
 }
+
+var host string
 
 // Execute adds all child commands to the root command and sets flags appropriately.
 // This is called by main.main(). It only needs to happen once to the rootCmd.
@@ -47,40 +67,57 @@ func Execute() {
 }
 
 func init() {
-	// cobra.OnInitialize(initConfig)
-
-	// Here you will define your flags and configuration settings.
-	// Cobra supports persistent flags, which, if defined here,
-	// will be global for your application.
-	// rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is $HOME/.client.yaml)")
-
-	// Cobra also supports local flags, which will only run
-	// when this action is called directly.
-	// rootCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
+	rootCmd.PersistentFlags().StringVarP(&host, "server", "s", DEFAULTHOST+":"+DEFAULTWEBPORT, "Host:port of the hangman server, ie: hangame.com:8080")
 }
 
-// initConfig reads in config file and ENV variables if set.
-func initConfig() {
-	// if cfgFile != "" {
-	// 	// Use config file from the flag.
-	// 	viper.SetConfigFile(cfgFile)
-	// } else {
-	// 	// Find home directory.
-	// 	home, err := homedir.Dir()
-	// 	if err != nil {
-	// 		fmt.Println(err)
-	// 		os.Exit(1)
-	// 	}
+func bindJSON(r io.Reader, target interface{}) error {
+	body, err := ioutil.ReadAll(r)
+	if err != nil {
+		return err
+	}
+	return json.Unmarshal(body, target)
+}
 
-	// 	// Search config in home directory with name ".client" (without extension).
-	// 	viper.AddConfigPath(home)
-	// 	viper.SetConfigName(".client")
-	// }
+func request2Hs(url string) (*hangman.Hstatus, error) {
+	resp, err := http.Get(url)
+	if err != nil {
+		return nil, err
+	}
 
-	// viper.AutomaticEnv() // read in environment variables that match
+	body, err := ioutil.ReadAll(resp.Body)
+	resp.Body.Close()
 
-	// // If a config file is found, read it in.
-	// if err := viper.ReadInConfig(); err == nil {
-	// 	fmt.Println("Using config file:", viper.ConfigFileUsed())
-	// }
+	var answer responseHs
+
+	if err := bindJSON(bytes.NewReader(body), &answer); err != nil {
+		return nil, fmt.Errorf("error reading response %v", err)
+	}
+
+	if answer.Status == server.StatusFail {
+		return nil, fmt.Errorf("Error: Can not generate a new game, code:%d, %s", answer.Code, answer.Message)
+	}
+
+	return answer.Data.Content, nil
+}
+
+func request2HsArr(url string) (*[]hangman.Hstatus, error) {
+	resp, err := http.Get(url)
+	if err != nil {
+		return nil, err
+	}
+
+	body, err := ioutil.ReadAll(resp.Body)
+	resp.Body.Close()
+
+	var answer responseHsArr
+
+	if err := bindJSON(bytes.NewReader(body), &answer); err != nil {
+		return nil, fmt.Errorf("error reading response %v", err)
+	}
+
+	if answer.Status == server.StatusFail {
+		return nil, fmt.Errorf("Error: Can not generate a new game, code:%d, %s", answer.Code, answer.Message)
+	}
+
+	return answer.Data.Content, nil
 }

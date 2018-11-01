@@ -1,6 +1,7 @@
 package hangman
 
 import (
+	"fmt"
 	"time"
 
 	"github.com/elafont/CbreChallenge/words"
@@ -101,9 +102,20 @@ func (hm *Hangman) Status() Hstatus {
 	return st
 }
 
+// String, make hstatus a member of the stringer interface
+func (hs Hstatus) String() string {
+	return fmt.Sprintf(`Hangman Game: %d
+------------------------
+Word to guess: %s
+
+Tries: %d
+Wrong guesses: %s
+Started: %s
+------------------------
+
+`, hs.Id, hs.GuessedSoFar, hs.Tries, hs.Failed, hs.Start)
+}
+
 // func (hm *Hangman) Show() string {
 // 	return hm.word
 // }
-
-/* ToDo:
- */

@@ -66,11 +66,11 @@ func GetGame(s *Server) http.HandlerFunc {
 			return
 		}
 
-		if int(id) > len(s.Games) {
+		if int(id) >= len(s.Games) {
 			// error, id not available  http.StatusBadRequest
 			NewResponse(
 				http.StatusBadRequest,
-				fmt.Sprintf("ID: %d not available de %d", id, len(s.Games)),
+				fmt.Sprintf("ID: %d not available of %d", id, len(s.Games)),
 				nil).WriteTo(w)
 			return
 		}
@@ -103,7 +103,7 @@ func Guess(s *Server) http.HandlerFunc {
 			return
 		}
 
-		if int(id) > len(s.Games) {
+		if int(id) >= len(s.Games) {
 			// error, id not available  http.StatusBadRequest
 			NewResponse(
 				http.StatusBadRequest,
@@ -115,7 +115,6 @@ func Guess(s *Server) http.HandlerFunc {
 		game := s.Games[id]
 		if game.ID() != int(id) {
 			// game id is not in the right place
-			// http.StatusInternalServerError
 			NewResponse(http.StatusInternalServerError, "Internal DB Corrupted", nil).WriteTo(w)
 			return
 		}

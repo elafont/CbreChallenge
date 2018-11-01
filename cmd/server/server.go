@@ -13,10 +13,11 @@ import (
 	"github.com/gorilla/mux"
 )
 
+const DEFAULTHOST = "localhost"
 const DEFAULTWEBPORT = "8080"
 
 var (
-	ipWeb = flag.String("ip", "localhost:"+DEFAULTWEBPORT, "Web IP:PORT used to listen ie: *:8080, :8080, localhost")
+	ipWeb = flag.String("ip", DEFAULTHOST+":"+DEFAULTWEBPORT, "Web IP:PORT used to listen ie: *:8080, :8080, localhost")
 	help  = flag.Bool("help", false, "Print Usage options")
 )
 
